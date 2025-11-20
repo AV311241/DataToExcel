@@ -10,13 +10,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 class AIForDataFill:
     """Class wrapper for product copy generation using a chat LLM + agent.
 
-    Usage:
-        ai = AIForDataFill(api_key_env='GOOGLE_API_KEY')
-        out = ai.get_response(product_json)
-
-    The class avoids hard-coding API keys. If the required LLM packages are not
-    available or the API key is missing, `get_response` will fall back to a
-    deterministic `fake_response` useful for offline testing.
     """
 
     def __init__(self, model: str = "gemini-2.0-flash-lite", api_key: str = "GOOGLE_API_KEY",include_column_ai_response:list = None ):
@@ -41,9 +34,8 @@ class AIForDataFill:
         # Initialize the LLM/agent if possible
         if ChatGoogleGenerativeAI is not None and create_agent is not None and self.api_key:
             print("Initializing agent...")
-            print(self.include_column_ai_response)
             try:
-                llm = ChatGoogleGenerativeAI(model=self.model, api_key=self.api_key)
+                llm = ChatGoogleGenerativeAI(model=self.model, api_key=self.api_key,temperature=0.8)
                 self.agent = create_agent(system_prompt=self.system_prompt, model=llm)
             except Exception as e:
                 print(f"Error initializing agent: {e}")
@@ -66,7 +58,9 @@ class AIForDataFill:
 
     def build_prompt(self, product: Dict[str, Any]) -> str:
         """Create the single large prompt text sent to the agent/LLM."""
-        return f"{str(input)}"
+        return  f"""Write a new product description for: {json.dumps(product)}. 
+                 Make it different from previous versions, while still following the format.
+                 """
 
 
 

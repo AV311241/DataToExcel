@@ -12,6 +12,7 @@ Notes:
 
 """
 
+
 import argparse
 import sys
 from typing import Optional
@@ -50,7 +51,6 @@ def read_excel(path: str, sheet: Optional[str] = None) -> pd.DataFrame:
 
 
 def exclude_irrelevent_data(data,exclude_columns_ai_request):
-    print(exclude_columns_ai_request)
     for s in exclude_columns_ai_request:
         if s in data:
             del data[s]
@@ -88,7 +88,7 @@ def find_only_empty_and_fill(file, start_row, end_row, exclude_columns_ai_reques
     file_path = file[0]
     sheet_name = file[1]
     df = read_excel(file_path, sheet_name)
-    print(include_column_ai_response)
+
     helperAi = ai_for_data_fill.AIForDataFill(include_column_ai_response=include_column_ai_response)
     # Convert Excel row numbers to 0-based index
     start_idx = start_row - 2
@@ -140,8 +140,8 @@ def main() -> int:
     include_column_ai_response = ["Short Description","Description","Tag"]
 
     find_only_empty_and_fill(["./data2.xlsx","Sheet1"]
-                              ,84     
-                              ,84
+                              ,85                  #start row
+                              ,85                  #end row
                              ,exclude_columns_ai_request
                              ,include_column_ai_response
                              )
