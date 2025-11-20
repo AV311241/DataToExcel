@@ -78,8 +78,10 @@ def fill_data_to_excel(file, df, row, data, include_column_ai_response):
 
     except PermissionError:
         print(f"Cannot write to {file_path} — file is open in Excel or in use.")
+        sys.exit(1)
     except Exception as e:
         print("Unexpected error:", e)
+        sys.exit(1)
 
 
 def find_only_empty_and_fill(file, start_row, end_row, exclude_columns_ai_request,include_column_ai_response ):
@@ -89,8 +91,8 @@ def find_only_empty_and_fill(file, start_row, end_row, exclude_columns_ai_reques
     print(include_column_ai_response)
     helperAi = ai_for_data_fill.AIForDataFill(include_column_ai_response=include_column_ai_response)
     # Convert Excel row numbers to 0-based index
-    start_idx = start_row - 1
-    end_idx = end_row - 1
+    start_idx = start_row - 2
+    end_idx = end_row - 2
     
 
     for i in range(start_idx, end_idx + 1):
@@ -137,7 +139,9 @@ def main() -> int:
 ]
     include_column_ai_response = ["Short Description","Description","Tag"]
 
-    find_only_empty_and_fill(["./data2.xlsx","Sheet1"], 63, 67
+    find_only_empty_and_fill(["./data2.xlsx","Sheet1"]
+                              ,84     
+                              ,84
                              ,exclude_columns_ai_request
                              ,include_column_ai_response
                              )
