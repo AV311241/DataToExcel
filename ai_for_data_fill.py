@@ -14,7 +14,7 @@ class AIForDataFill:
 
     def __init__(self, model: str = "gemini-2.0-flash-lite", api_key: str = "GOOGLE_API_KEY",include_column_ai_response:list = None ):
         self.model = model
-        self.api_key = "AIzaSyCmX2C84RaXYnisvzd3n94cEFMMUjMmdqo"
+        self.api_key = "AIzaSyD55zhKT0qfcXY6xTTNaXM64BOIqFHA7dA"
         self.agent = None
         self.include_column_ai_response = include_column_ai_response
 

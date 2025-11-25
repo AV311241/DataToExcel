@@ -17,6 +17,7 @@ import argparse
 import sys
 from typing import Optional
 import ai_for_data_fill
+from excel_writer import ExcelWriter
 
 import pandas as pd
 from openpyxl import load_workbook
@@ -57,65 +58,44 @@ def exclude_irrelevent_data(data,exclude_columns_ai_request):
     return data
 
 
-def fill_data_to_excel(file, df, row, data, include_column_ai_response):
+
+def find_only_empty_and_fill(file, start_row, end_row, exclude_columns_ai_request, include_column_ai_response):
     file_path, sheet_name = file
-    columns = include_column_ai_response
-    col_indexes = df.columns
-
-    try:
-        # Open workbook normally (do not use data_only when writing)
-        wb = load_workbook(file_path)
-        sheet = wb[sheet_name]
-
-        # Write data to the correct columns
-        for col in columns:
-            col_index = col_indexes.get_loc(col) + 1  # openpyxl is 1-based
-            sheet.cell(row=row, column=col_index).value = data.get(col)
-
-        # Save workbook safely
-        wb.save(file_path)
-        wb.close()  # Ensure file handle is released
-
-    except PermissionError:
-        print(f"Cannot write to {file_path} — file is open in Excel or in use.")
-        sys.exit(1)
-    except Exception as e:
-        print("Unexpected error:", e)
-        sys.exit(1)
-
-
-def find_only_empty_and_fill(file, start_row, end_row, exclude_columns_ai_request,include_column_ai_response ):
-    file_path = file[0]
-    sheet_name = file[1]
     df = read_excel(file_path, sheet_name)
 
     helperAi = ai_for_data_fill.AIForDataFill(include_column_ai_response=include_column_ai_response)
-    # Convert Excel row numbers to 0-based index
+
+    # Convert Excel row numbers to 0-based index for pandas
     start_idx = start_row - 2
     end_idx = end_row - 2
-    
 
-    for i in range(start_idx, end_idx + 1):
-        row = df.iloc[i]
+    # Use ExcelWriter context manager to keep file open during loop
+    with ExcelWriter(file_path, sheet_name) as writer:
+        for i in range(start_idx, end_idx + 1):
+            row = df.iloc[i]
 
-        # Skip if row has no empty cells
-        if not row.isnull().any():
-            continue
+            # Skip if row has no empty cells
+            if not row.isnull().any():
+                print(f"Excel Row {i+2}: skipped (no empty cells).")
+                continue
 
-        # Check if specified column is empty
-        if row[include_column_ai_response].isnull().any():
+            # Check if any of the target columns are empty
+            if row[include_column_ai_response].isnull().any():
+                row_json = exclude_irrelevent_data(row.to_dict(), exclude_columns_ai_request)
+                print(f"Excel Row {i+2}: processing...")
 
-            row_json = exclude_irrelevent_data(row.to_dict(),exclude_columns_ai_request)
-            ai_response = helperAi.get_response(row_json)
-            print(f"Excel Row {i+2}:processing")
-            if len(ai_response) > 0:
-                fill_data_to_excel(file=file,df=df,row=i+2,data=ai_response,include_column_ai_response=include_column_ai_response)
+                ai_response = helperAi.get_response(row_json)
+
+                if len(ai_response) > 0:
+                    writer.write_row(df=df, row=i+2, data=ai_response, columns=include_column_ai_response)
+                else:
+                    print("Empty data response from AI:", ai_response)
+                    sys.exit(1)  # Exit for saving AI call
+
+                print(f"Excel Row {i+2}: processed.")
             else:
-                print("Emplty data response from ai :",ai_response)
-                sys.exit(1)     # exit for saving ai call
-            print(f"Excel Row {i+2}:Processed")
-        else:
-            print(f"Excel Row {i+2}: skipped")
+                print(f"Excel Row {i+2}: skipped (target columns filled).")
+
 
 
 def main() -> int:
@@ -139,9 +119,9 @@ def main() -> int:
 ]
     include_column_ai_response = ["Short Description","Description","Tag"]
 
-    find_only_empty_and_fill(["./data2.xlsx","Sheet1"]
-                              ,85                  #start row
-                              ,85                  #end row
+    find_only_empty_and_fill(["C:\\Users\\AVERMA41\\Downloads\\data.xlsx","Sheet1"]
+                              ,80                  #start row
+                              ,83                  #end row
                              ,exclude_columns_ai_request
                              ,include_column_ai_response
                              )
